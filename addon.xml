@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<addon
+	id="plugin.video.shoofvod"
+	version="7.0.0"
+	name="ShoofVod"
+	provider-name="Abdelhafidh Belalia. (abdelhafidh.com)">
+	<email>admin@abdelhafidh.com</email>
+	<requires>
+		<import addon="xbmc.python"	version="2.26.0"/>
+		<import addon="script.module.future"/>
+	</requires>
+	<extension point="xbmc.python.pluginsource" library="main.py">
+		<provides>video</provides>
+	</extension>
+	<extension point="xbmc.addon.metadata">
+		<summary>Shoofvod (aka. Bokra net) plugin</summary>
+		<description>Shoofvod (aka. Bokra net) plugin</description>
+		<website>http://shoofvod.com</website>
+		<license>General Public License v3.0</license>
+		<platform>all</platform>
+		<assets>
+			<icon>resources/icon.png</icon>
+			<fanart>resources/fanart.jpg</fanart>
+		</assets>
+		<source>https://github.com/s77rt/kodi.plugin.video.shoofvod</source>
+	</extension>
+</addon>
