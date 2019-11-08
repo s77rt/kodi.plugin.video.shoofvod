@@ -18,17 +18,73 @@ def get_categories():
 	req.add_header('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.97 Safari/537.36')
 	response = urllib.request.urlopen(req)
 	data = response.read()
-	categories = re.findall(r'<a\s+href="\/Cat.*?">([^<]*)?<\/a>', data.decode('utf-8'), re.DOTALL|re.MULTILINE)
+	categories = re.findall(r'<a\s+href="(\/Cat.*?)">([^<]*)?<\/a>', data.decode('utf-8'), re.DOTALL|re.MULTILINE)
 	return categories
+
+def get_videos(category):
+	req = urllib.request.Request(WEBSITE+category)
+	req.add_header('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.97 Safari/537.36')
+	response = urllib.request.urlopen(req)
+	data = response.read()
+	videos_url = re.findall(r'<a\s+href="(\/vidpage_.*?)">', data.decode('utf-8'), re.DOTALL|re.MULTILINE)
+	videos = []
+	for video_url in videos_url:
+		req = urllib.request.Request(WEBSITE+video_url)
+		req.add_header('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.97 Safari/537.36')
+		response = urllib.request.urlopen(req)
+		data = response.read()
+		try:
+			video_info_name = re.search(r'<h1\s+class="art-main-title">([^<]*)<\/h1>', data.decode('utf-8'), re.DOTALL|re.MULTILINE)[1]
+			video_info_thumb = re.search(r'<img\s+itemprop="image"\s+title="'+re.escape(video_info_name)+'"[^>]*\s*src="(.*?)"', data.decode('utf-8'), re.DOTALL|re.MULTILINE)[1]
+			video_info_genre = re.search(r'<a\s+href="\/Album-.*?"\s+title="(.*?)"', data.decode('utf-8'), re.DOTALL|re.MULTILINE)[1]
+			
+			phase2_url = WEBSITE+'/Play'+video_url.replace('vidpage_', '')
+			phase2_req = urllib.request.Request(phase2_url)
+			phase2_req.add_header('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.97 Safari/537.36')
+			phase2_response = urllib.request.urlopen(phase2_req)
+			phase2_data = phase2_response.read()
+			
+			phase3_url = re.search(r'<iframe\s+src="(.*?)"', phase2_data.decode('utf-8'), re.DOTALL|re.MULTILINE)[1]
+			phase3_req = urllib.request.Request(phase3_url)
+			phase3_req.add_header('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.97 Safari/537.36')
+			phase3_response = urllib.request.urlopen(phase3_req)
+			phase3_data = phase3_response.read()
+
+			video_info_src = "http://" + re.search(r'<source\s+src="\/?\/?(.*?)"', phase3_data.decode('utf-8'), re.DOTALL|re.MULTILINE)[1]
+		except:
+			xbmc.log('ShoofVod: extracing video info from category {} failed.'.format(category))
+		else:
+			videos.append({
+				'name': video_info_name,
+				'thumb': video_info_thumb,
+				'genre': video_info_genre,
+				'src': video_info_src,
+			})
+	return videos
 
 def list_categories():
 	categories = get_categories()
 	listing = []
 	for category in categories:
-		list_item = xbmcgui.ListItem(label=category)
-		list_item.setInfo('video', {'title': category, 'genre': category})
-		url = '{0}?action=listing&category={1}'.format(__url__, category)
+		list_item = xbmcgui.ListItem(label=category[1])
+		list_item.setInfo('video', {'title': category, 'genre': category[1]})
+		url = '{0}?action=listing&category={1}'.format(__url__, category[0])
 		is_folder = True
+		listing.append((url, list_item, is_folder))
+	xbmcplugin.addDirectoryItems(__handle__, listing, len(listing))
+	xbmcplugin.addSortMethod(__handle__, xbmcplugin.SORT_METHOD_LABEL_IGNORE_THE)
+	xbmcplugin.endOfDirectory(__handle__)
+
+def list_videos(category):
+	videos = get_videos(category)
+	listing = []
+	for video in videos:
+		list_item = xbmcgui.ListItem(label=video['name'], thumbnailImage=video['thumb'])
+		list_item.setProperty('fanart_image', video['thumb'])
+		list_item.setInfo('video', {'title': video['name'], 'genre': video['genre']})
+		list_item.setProperty('IsPlayable', 'true')
+		url = '{0}?action=play&src={1}'.format(__url__, video['src'])
+		is_folder = False
 		listing.append((url, list_item, is_folder))
 	xbmcplugin.addDirectoryItems(__handle__, listing, len(listing))
 	xbmcplugin.addSortMethod(__handle__, xbmcplugin.SORT_METHOD_LABEL_IGNORE_THE)
@@ -38,12 +94,11 @@ def router(paramstring):
 	parsed_paramstring = urllib.parse.urlparse(paramstring[1:])
 	params = dict(urllib.parse.parse_qsl(parsed_paramstring.query))
 	if params:
-		xbmc.log("oops")
-		"""
 		if params['action'] == 'listing':
 			list_videos(params['category'])
+		"""
 		elif params['action'] == 'play':
-			play_video(params['video'])
+			play_video(params['src'])
 		"""
 	else:
 		list_categories()
