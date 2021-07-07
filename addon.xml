@@ -1,15 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <addon
 	id="plugin.video.shoofvod"
-	version="7.0.0"
+	version="8.0.0"
 	name="ShoofVod"
 	provider-name="Abdelhafidh Belalia. (abdelhafidh.com)">
-	<email>admin@abdelhafidh.com</email>
 	<requires>
-		<import addon="xbmc.python"	version="2.26.0"/>
-		<import addon="script.module.future"/>
+		<import addon="xbmc.python"	version="3.0.0"/>
 	</requires>
-	<extension point="xbmc.python.pluginsource" library="main.py">
+	<extension point="xbmc.python.pluginsource" library="addon.py">
 		<provides>video</provides>
 	</extension>
 	<extension point="xbmc.addon.metadata">
@@ -18,6 +16,7 @@
 		<website>http://shoofvod.com</website>
 		<license>General Public License v3.0</license>
 		<platform>all</platform>
+		<email>admin@abdelhafidh.com</email>
 		<assets>
 			<icon>resources/icon.png</icon>
 			<fanart>resources/fanart.jpg</fanart>
